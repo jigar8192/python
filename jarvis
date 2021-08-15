@@ -1,0 +1,249 @@
+#code from harry youtube
+import pyttsx3
+import datetime
+import os,random,psutil 
+import webbrowser
+import requests
+import wikipedia,smtplib
+import speech_recognition as sr
+
+#time
+strTime = datetime.datetime.now().strftime("%H:%M")
+
+#battery information gettin_data
+def battery_info():
+     battery = psutil.sensors_battery()
+     plugged = battery.power_plugged
+     percent = battery.percent
+     if (plugged == True) & (int(percent) == 100) :
+          plugged = "Battery level is full sir , please remove the charger"
+          return plugged
+     elif plugged == True:
+          plugged = f"Battery level is {percent} percent and plugged in"
+          return plugged
+     else :
+          #plugged = f"Battery level is {percent} percent"
+          #return plugged
+        if percent < 20:
+              plugged = f"Battery level is {percent} percent please connect the charger"
+              return plugged
+        else:
+            plugged = f"Battery level is {percent} percent"
+            return plugged
+#print(percent+'% | ' +plugged)
+
+#speak data
+engine =  pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+engine.setProperty('voice',voices[0].id)
+######
+words = {0:["stop","close","drop"],
+         1:["music","play song","play music"],
+         2:["ok","ok fine","correct","fine"],
+         3:["jigar","jiguu","jigu"]}
+         
+index = {0:"exit",1:"song",2:"ok",3:"jigar"}
+j = len(words)
+#######
+def weather():
+    try:
+        url = 'https://samples.openweathermap.org/data/2.5/weather?id=valsad&appid=439d4b804bc8187953eb36d2a8c26a02'
+        json_data = requests.get(url).json()
+        #print(json_data)
+        formatted_data = json_data['weather'][0]['main']
+        #print(formatted_data)
+        return formatted_data
+    except Exception:
+        return 0
+ 
+def speak(audio): #speak functio
+    engine.say(audio)
+    engine.runAndWait()
+
+def wishMe():
+    v = weather()
+    hour = int(datetime.datetime.now().hour)
+    if hour>=0 and hour<12:
+        speak("good morning sir")
+
+    elif hour>=12 and hour<18:
+        speak("good afternoon sir")
+
+    else:
+         speak("O hello sir ")
+
+    if v == 0:
+        speak("sorry, sir we are not connected to the internet right now")
+        speak(battery_info())
+
+    else:
+        speak(f" your Jarvis is Ready, There is  {v} in weather,and there is {strTime} in the clock")
+        speak(battery_info())
+    
+def takeCommand():
+    #it takes input from microphone and returne string output
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+          print ('Say Something :')
+          audio = r.listen(source)
+          print ('Recognizing.....')
+    try:
+        text = r.recognize_google(audio,language='en-in')
+        #text = "stop"
+        speak(text)
+        for i in range(j):
+            if text in words[i]:
+                #print(index[i])
+                query = index[i]
+                query = query.lower()
+                return query
+        #print(text)
+        text = text.lower()
+        return text
+    except Exception as e:
+          print(e)
+          #speak("sorry, sir there is no internet connection")
+
+def what_to_do():
+    try:
+        speak("what we are going to do sir")
+        query = takeCommand().lower()
+        if "movie" in query:
+            speak("witch kind of movie sir like  bollywood , hollywood , south or web serise sir ")
+            m = takeCommand().lower()
+            if "bollywood" in m:
+                os.startfile('E:\\bollywood')
+            elif "hollywood" in m:
+                 os.startfile('E:\\hollywood')
+            elif "south" in m:
+                 os.startfile('E:\\South_Movie')
+            elif "web series" in m:
+                os.startfile('E:\\web seris')
+        elif "work" in query:
+            speak("should i open visual stdio code sir ?")
+            work = takeCommand().lower()
+            if "ok" in work:
+                os.startfile("H:\\Microsoft VS Code\\Code.exe")
+            elif "open files" in work:
+                    speak("what kind of files sir")
+                    f = takeCommand().lower()
+            if "html" in f:
+                    os.startfile("G:\\HTML")
+            elif "python" in f:
+                    os.startfile("G:\\python")
+    except Exception:
+        speak("ok you can do by your self")
+
+def sendEmail(to,content):
+    server = smtplib.SMTP('smtp.gmail.com',587)
+    server.ehlo()
+    server.starttls()
+    server.login('jiguu121@gmail.com','26091999hj')
+    server.sendmail('jigar.9.jp789@gmail.com',to,content)
+    server.close()
+
+def info(iid):
+    friend =("hiren","kalu","kuldeep","jay","kiran")
+    data = {'jigar':"you are my boss",'friend':f"{iid}he is your friend sir",}
+    if f'{iid}' in data:
+            info = (data[f'{iid}'])
+            speak(f"{info}")
+    elif f'{iid}' in friend:
+        info = (data['friend'])
+        speak(f"{info}")
+
+if __name__ == "__main__":
+    #speak("hello jarvis welcom to the new world")
+    wishMe()
+    #what_to_do()
+    while True:
+        query1 = str(takeCommand())
+        query = query1.lower()
+    #logic for executing tasks based on query 
+        if 'wikipedia' in query:
+            speak("serching wikipedia")
+            query = query.replace("wikipedia","")
+            results = wikipedia.summary(query,sentences=2)
+            speak("acording to wikipedia")
+            print(results)
+            speak(results)
+        
+
+        elif 'open youtube' in query:
+            speak("here you go ")
+            webbrowser.open("youtube.com")
+
+        elif 'open google' in query:
+            speak("here you go ")
+            webbrowser.open("google.com")
+
+        elif 'who am i' in query:
+            speak("You are my boss jigar ")
+        
+        elif 'who are you' in query:
+            speak("I am jarvis your personal Assistant sir ")
+
+        elif 'song' in query:
+            speak("just a minute sir ")
+            music_dir = 'E:\\Music\\Bollywould'
+            songs = os.listdir(music_dir)
+            path, dirs, files = next(os.walk("E:\\Music\\Bollywould"))
+            total = len(files)
+            target = random.randint(0,total)
+            os.startfile(os.path.join(music_dir,songs[target]))
+
+        elif 'time' in query:
+            strTime = datetime.datetime.now().strftime("%H:%M:%S")
+            speak(f"sir ,the time is {strTime}") 
+        
+        elif 'code' in query:
+            speak("just a minute sir ")
+            vis_path = "H:\\Microsoft VS Code\\Code.exe"
+            os.startfile(vis_path)
+
+        elif 'google' in query:
+            speak("just a minute sir ")
+            google_1 = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
+            os.startfile(google_1)
+
+        elif (('exit') or ('stop')) in query:
+            speak("okay sir ,have a good day")
+            exit()
+
+        elif 'send email' in query:
+            try:
+                speak("what shoud i send sir")
+                content = takeCommand()
+                to = "jigar.9.jp789@gmail.com"
+                sendEmail(to,content)
+                speak("email has been send sir")
+            except Exception as e:
+                print(e)
+                speak("there is a problem sir email is not sent")
+
+        elif 'wake up' in query:
+            speak("always there for you sir , let's rock n roll ")
+
+        elif 'my software' in query:
+            speak("here it is")
+            soft = 'D:\\my sowftware'            
+            os.startfile(soft)
+
+        elif 'video lecture' in query:
+            speak("here it is")
+            soft = 'D:\\Video lecture'            
+            os.startfile(soft)
+        
+        elif 'who is ' in query:
+            query = query.lower()
+            iid = query.replace("who is ","")
+            #print(iid)
+            info(iid)
+        
+        elif 'close vlc' in query:
+            os.system("TASKKILL /F /IM vlc.exe")
+            speak("vlc media player is close sir")
+
+        elif 'restart pc' in query:
+            speak("ok, sir i'm rebooting the system")
+            os.system('shutdown /r /t 5')
